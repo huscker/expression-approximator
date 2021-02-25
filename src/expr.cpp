@@ -10,7 +10,7 @@ struct Node{
     bool rightVar;
     int leftData;
     int rightData;
-    void * op;
+    void(* op) (const float & ,const float & ,float & );
     std::string symb;
     struct Node * left;
     struct Node * right;
@@ -61,6 +61,76 @@ void postorder(Node* p,int indent=0){
         }
     }
 }
+std::string infix(Node * p){
+    std::string res = "(";
+    if(p->left == NULL){
+        if(p->leftVar){
+            res+='x';
+        }else{
+            res+=std::to_string(p->leftData);
+        }
+    }else{
+        res+=infix(p->left);
+    }
+    res+=p->symb;
+    if(p->right == NULL){
+        if(p->rightVar){
+            res+='x';
+        }else{
+            res+=std::to_string(p->rightData);
+        }
+    }else{
+        res+=infix(p->right);
+    }
+    res+=')';
+    return res;
+}
+unsigned int count(Node* p){
+    unsigned int res = 1;
+    if (p->left != NULL)
+    {
+        res += count(p->left);
+    }
+    if (p->right != NULL)
+    {
+        res += count(p->right);
+    }
+    return res;
+}
+unsigned int get_branch_at(Node * p,const unsigned int pos,Node ** out){
+    unsigned int res = 1;
+    if (p->left != NULL)
+    {
+        res += get_branch_at(p->left,pos,out);
+    }
+    if (p->right != NULL)
+    {
+        res += get_branch_at(p->right,pos,out);
+    }
+    if(res == pos){
+        out = &p;
+    }
+    return res;
+}
+float get_result(Node* p,float x){
+    float t1,t2,res;
+    if(p->left != NULL){
+        t1 = get_result(p->left,x);
+    }else if(p->leftVar){
+        t1 = x;
+    }else {
+        t1 = p->leftData;
+    }
+    if(p->right != NULL){
+        t2 = get_result(p->right,x);
+    }else if(p->rightVar){
+        t2 = x;
+    }else {
+        t2 = p->rightData;
+    }
+    p->op(t1,t2,res);
+    return res;
+}
 
 Expression::Expression(std::vector<void(*)(const float & ,const float & ,float & )> avops,std::vector<std::string> avops_symb,int ran_max,int ran_min){
     Expression::ran_max = ran_max;
@@ -98,7 +168,7 @@ void Expression::fill_tree(Node * node){
     }
 }
 
-void Expression::generate_random(int n){
+void Expression::generate_random(unsigned int n){
     if (n<1){
         printf("Invalid argument. Force quiting.");
         exit(EXIT_FAILURE);
@@ -111,7 +181,7 @@ void Expression::generate_random(int n){
     temp->rightVar = false;
     temp->leftData = 0;
     temp->rightData = 0;
-    temp->op = &Expression::avops.at(r);
+    temp->op = Expression::avops.at(r);
     temp->symb = Expression::avops_symb.at(r);
     temp->left = NULL;
     temp->right = NULL;
@@ -123,7 +193,7 @@ void Expression::generate_random(int n){
         t->rightVar = false;
         t->leftData = 0;
         t->rightData = 0;
-        t->op = &Expression::avops.at(r);
+        t->op = Expression::avops.at(r);
         t->symb = Expression::avops_symb.at(r);
         t->left = NULL;
         t->right = NULL;
@@ -134,16 +204,19 @@ void Expression::generate_random(int n){
     Expression::tree = temp;
 }
 void Expression::mutate(){
-
+    
 }
-float Expression::calculate(){
-
+float Expression::calculate(float x){
+    return get_result(Expression::tree,x);
 }
-int Expression::get_str(char * out){
-
+std::string Expression::get_str(){
+    return infix(Expression::tree);
 }
 void Expression::print_tree(){
     postorder(Expression::tree);
+}
+unsigned int Expression::get_length(){
+    return count(Expression::tree);
 }
 Expression Expression::cross(Expression othr){
 

@@ -17,7 +17,7 @@ void div(const float & a,const float & b,float & c){
 
 int main(){
     std::vector<void(*)(const float & ,const float & ,float & )> avops;
-    std::vector<std::string> avops_symb = {"add","sub","mul","div"};
+    std::vector<std::string> avops_symb = {"+","-","*","/"};
     avops.push_back(add);
     avops.push_back(sub);
     avops.push_back(mul);
@@ -25,5 +25,7 @@ int main(){
     Expression expr(avops,avops_symb,100,1);
     expr.generate_random(30);
     expr.print_tree();
+    std::cout << expr.get_str() << std::endl << expr.get_length() << std::endl;
+    std::cout << expr.calculate(30.3);
     return 0;
 }
