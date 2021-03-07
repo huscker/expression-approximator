@@ -27,6 +27,7 @@ int main(){
     Expression expr(avops,avops_symb,100,1);
     expr.generate_random(30);
     expr.print_tree();
+    std::cout << std::endl;
     std::cout << expr.get_str() << std::endl << expr.get_length() << std::endl;
     std::cout << expr.calculate(30.3) << std::endl;
     Expression expr2 = expr.get_copy();

@@ -117,18 +117,27 @@ unsigned int count(Node* p){
     }
     return res;
 }
-void get_branch_at(Node *p,const unsigned int pos,Node ** out,unsigned int & counter){
+Node ** get_branch_at(Node *p,const unsigned int pos,unsigned int & counter){
+    Node ** t = NULL;
     counter++;
-    if(counter == pos){
-        out = &p;
-        return;
-    }
     if(p->left != NULL){
-        get_branch_at(p->left,pos,out,counter);
+        if(pos == counter){
+            return &p->left;
+        }else{
+            t = get_branch_at(p->left,pos,counter);
+        }
+    }
+    if(t!=NULL){
+        return t;
     }
     if(p->right != NULL){
-        get_branch_at(p->right,pos,out,counter);
+        if(pos == counter){
+            return &p->right;
+        }else{
+            t = get_branch_at(p->right,pos,counter);
+        }
     }
+    return t;
 }
 float get_result(Node* p,float x){
     float t1,t2,res;
@@ -168,10 +177,7 @@ Node ** get_parent_of(Node* pos,Node* tree){
             t = get_parent_of(pos,tree->right);
         }
     }
-    if(t!=NULL){
-        return t;
-    }
-    return NULL;
+    return t;
 }
 Node * copy_tree(Node* tree){
     Node * res = copy_node(tree);
@@ -274,12 +280,16 @@ void Expression::generate_random(unsigned int n){
 void Expression::mutate(int chance){
     if(rand() % 1000 <= chance){
         //mutate leaves
-        Node **p;
+        Node **p = NULL;
         int t = rand() % 3;
-        t = 2;
         if(t==0){ //modify
             unsigned int c = 0;
-            get_branch_at(Expression::tree,rand() % get_length(),p,c);
+            t = rand() % count(Expression::tree);
+            if(t == 0){
+                p = &(Expression::tree);
+            }else{
+                p = get_branch_at(Expression::tree,rand() % count(Expression::tree),c);
+            }
             if(p == NULL){
                 printf("Unknown error. Quitting.\n");
                 exit(EXIT_FAILURE);
@@ -290,7 +300,6 @@ void Expression::mutate(int chance){
             temp->right = (*p)->right;
             delete (*p);
             (*p) = temp;
-            
         }if(t==1){ // append new
             std::vector<Node **> leaves = get_leaves(Expression::tree);
             p = leaves.at(rand()%leaves.size());
@@ -340,7 +349,4 @@ unsigned int Expression::get_length(){
 }
 Expression Expression::get_copy(){
     return Expression(Expression::tree,Expression::avops,Expression::avops_symb,Expression::ran_max,Expression::ran_min);
-}
-Expression Expression::cross(Expression othr){
-    // no cross function
 }
