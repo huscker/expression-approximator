@@ -34,6 +34,26 @@ std::vector<Node **> get_leaves(Node * current){
     }
     return temp;
 }
+std::vector<Node **> get_othr_leaves(Node* current){
+    std::vector<Node **> temp;
+    if(current->left != NULL){
+        if(current->left->left == NULL && current->left->right == NULL){
+            temp.push_back(&current->left);
+        }else{
+            std::vector<Node **> t = get_othr_leaves(current->left);
+            std::copy(t.begin(),t.end(),std::back_inserter(temp));
+        }
+    }
+    if(current->right != NULL){
+        if(current->right->left == NULL && current->right->right == NULL){
+            temp.push_back(&current->right);
+        }else{
+            std::vector<Node **> t = get_othr_leaves(current->right);
+            std::copy(t.begin(),t.end(),std::back_inserter(temp));
+        }
+    }
+    return temp;
+}
 void delete_tree(Node * tree){
     if(tree != NULL){
         if(tree->left != NULL){
@@ -97,20 +117,18 @@ unsigned int count(Node* p){
     }
     return res;
 }
-unsigned int get_branch_at(Node * p,const unsigned int pos,Node ** out){
-    unsigned int res = 1;
-    if (p->left != NULL)
-    {
-        res += get_branch_at(p->left,pos,out);
-    }
-    if (p->right != NULL)
-    {
-        res += get_branch_at(p->right,pos,out);
-    }
-    if(res == pos){
+void get_branch_at(Node *p,const unsigned int pos,Node ** out,unsigned int & counter){
+    counter++;
+    if(counter == pos){
         out = &p;
+        return;
     }
-    return res;
+    if(p->left != NULL){
+        get_branch_at(p->left,pos,out,counter);
+    }
+    if(p->right != NULL){
+        get_branch_at(p->right,pos,out,counter);
+    }
 }
 float get_result(Node* p,float x){
     float t1,t2,res;
@@ -131,6 +149,52 @@ float get_result(Node* p,float x){
     p->op(t1,t2,res);
     return res;
 }
+Node ** get_parent_of(Node* pos,Node* tree){
+    Node ** t = NULL;
+    if(tree->left != NULL){
+        if(tree->left->left == pos || tree->left->right == pos){
+            return &tree->left;
+        }else{
+            t = get_parent_of(pos,tree->left);
+        }
+    }
+    if(t!=NULL){
+        return t;
+    }
+    if(tree->right != NULL){
+        if(tree->right->left == pos || tree->right->right == pos){
+            return &tree->right;
+        }else{
+            t = get_parent_of(pos,tree->right);
+        }
+    }
+    if(t!=NULL){
+        return t;
+    }
+    return NULL;
+}
+Node * copy_tree(Node* tree){
+    Node * res = copy_node(tree);
+    if(res->left != NULL){
+        res->left = copy_tree(tree->left);
+    }
+    if(res->right != NULL){
+        res->right = copy_tree(tree->right);
+    }
+    return res;
+}
+Node * copy_node(Node* node){
+    Node * res = new Node;
+    res->left = node->left;
+    res->leftData = node->leftData;
+    res->leftVar = node->leftVar;
+    res->op = node->op;
+    res->right = node->right;
+    res->rightData = node->rightData;
+    res->rightVar = node->rightVar;
+    res->symb = node->symb;
+    return res;
+}
 
 Expression::Expression(std::vector<void(*)(const float & ,const float & ,float & )> avops,std::vector<std::string> avops_symb,int ran_max,int ran_min){
     Expression::ran_max = ran_max;
@@ -138,9 +202,16 @@ Expression::Expression(std::vector<void(*)(const float & ,const float & ,float &
     Expression::avops = avops;
     Expression::avops_symb = avops_symb;
     Expression::tree = NULL;
-    srand(time(0));
 
 }
+Expression::Expression(Node* tree,std::vector<void(*)(const float & ,const float & ,float & )> avops,std::vector<std::string> avops_symb,int ran_max,int ran_min){
+    Expression::ran_max = ran_max;
+    Expression::ran_min = ran_min;
+    Expression::avops = avops;
+    Expression::avops_symb = avops_symb;
+    Expression::tree = copy_tree(tree);
+}
+
 Expression::~Expression(){
     delete_tree(Expression::tree);
 }
@@ -167,15 +238,8 @@ void Expression::fill_tree(Node * node){
         fill_tree(node->right);
     }
 }
-
-void Expression::generate_random(unsigned int n){
-    if (n<1){
-        printf("Invalid argument. Force quiting.");
-        exit(EXIT_FAILURE);
-    }
-    delete_tree(Expression::tree);
-    // generate nodes
-    unsigned int r = rand() % avops.size();
+Node * Expression::create_node(){
+    unsigned int r = rand() % Expression::avops.size();
     Node * temp = new Node;
     temp->leftVar = false;
     temp->rightVar = false;
@@ -185,26 +249,82 @@ void Expression::generate_random(unsigned int n){
     temp->symb = Expression::avops_symb.at(r);
     temp->left = NULL;
     temp->right = NULL;
+    return temp;
+}
+
+void Expression::generate_random(unsigned int n){
+    if (n<1){
+        printf("Invalid argument. Force quiting.");
+        exit(EXIT_FAILURE);
+    }
+    delete_tree(Expression::tree);
+    // generate nodes
+    unsigned int r = rand() % avops.size();
+    Node * temp = Expression::create_node();
     for(int i = 1;i<n;i++){
         std::vector<Node **> leaves = get_leaves(temp);
         r = rand() % avops.size();
-        Node * t = new Node;
-        t->leftVar = false;
-        t->rightVar = false;
-        t->leftData = 0;
-        t->rightData = 0;
-        t->op = Expression::avops.at(r);
-        t->symb = Expression::avops_symb.at(r);
-        t->left = NULL;
-        t->right = NULL;
+        Node * t = create_node();
         *leaves.at(rand() % leaves.size()) = t;
     }
     // fill nodes 
     Expression::fill_tree(temp);
     Expression::tree = temp;
 }
-void Expression::mutate(){
-    
+void Expression::mutate(int chance){
+    if(rand() % 1000 <= chance){
+        //mutate leaves
+        Node **p;
+        int t = rand() % 3;
+        t = 2;
+        if(t==0){ //modify
+            unsigned int c = 0;
+            get_branch_at(Expression::tree,rand() % get_length(),p,c);
+            if(p == NULL){
+                printf("Unknown error. Quitting.\n");
+                exit(EXIT_FAILURE);
+            }
+            Node * temp = create_node();
+            fill_tree(temp);
+            temp->left = (*p)->left;
+            temp->right = (*p)->right;
+            delete (*p);
+            (*p) = temp;
+            
+        }if(t==1){ // append new
+            std::vector<Node **> leaves = get_leaves(Expression::tree);
+            p = leaves.at(rand()%leaves.size());
+            Node * temp = create_node();
+            fill_tree(temp);
+            *p = temp;
+        }if(t==2){ // delete
+            std::vector<Node **> leaves = get_othr_leaves(Expression::tree);
+            p = leaves.at(rand()%leaves.size());
+            Node ** parent = get_parent_of((*p),Expression::tree);
+            if((*parent)->left == (*p)){
+                delete (*parent)->left;
+                (*parent)->left = NULL;
+                if(rand() % 2 == 1){
+                    (*parent)->leftVar = true;
+                }
+                else{
+                    (*parent)->leftData = rand() % (Expression::ran_max-Expression::ran_min) + Expression::ran_min;
+                }
+            }
+            if((*parent)->right == (*p)){
+                delete (*parent)->right;
+                (*parent)->right = NULL;
+                if(rand() % 2 == 1){
+                    (*parent)->rightVar = true;
+                }
+                else{
+                    (*parent)->rightData = rand() % (Expression::ran_max-Expression::ran_min) + Expression::ran_min;
+                }
+            }
+        }
+        
+    }
+
 }
 float Expression::calculate(float x){
     return get_result(Expression::tree,x);
@@ -218,6 +338,9 @@ void Expression::print_tree(){
 unsigned int Expression::get_length(){
     return count(Expression::tree);
 }
+Expression Expression::get_copy(){
+    return Expression(Expression::tree,Expression::avops,Expression::avops_symb,Expression::ran_max,Expression::ran_min);
+}
 Expression Expression::cross(Expression othr){
-
+    // no cross function
 }
