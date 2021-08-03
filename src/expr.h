@@ -4,7 +4,7 @@
 #include <string>
 
 struct Node;
-
+ 
 std::vector<Node **> get_leaves(Node * current);
 std::vector<Node **> get_othr_leaves(Node* current);
 void postorder(Node * p,int indent);
@@ -12,7 +12,7 @@ std::string infix(Node * p);
 void delete_tree(Node * tree);
 unsigned int count(Node* p);
 float get_result(Node* p,float x);
-Node ** get_branch_at(Node *p,const unsigned int pos,unsigned int & counter);
+Node ** get_branch_at(Node ** p,const unsigned int pos,unsigned int & counter);
 Node ** get_parent_of(Node* pos,Node* tree);
 Node * copy_tree(Node* tree);
 Node * copy_node(Node* node);
@@ -37,7 +37,7 @@ class Expression{
         std::string get_str();
         unsigned int get_length();
         void print_tree();
-        Expression get_copy();
+        Expression* get_copy();
 };
 
 #endif // !EXPR_H

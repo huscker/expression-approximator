@@ -117,7 +117,26 @@ unsigned int count(Node* p){
     }
     return res;
 }
-Node ** get_branch_at(Node *p,const unsigned int pos,unsigned int & counter){
+Node ** get_branch_at(Node **p, const unsigned int pos,unsigned int & counter){
+    if(pos == counter){
+        return p;
+    }
+    Node ** t = NULL;
+    if((*p)->left != NULL){
+        counter++;
+        t = get_branch_at(&((*p)->left),pos,counter);
+    }
+    if(t != NULL){
+        return t;
+    }
+    if((*p)->right != NULL){
+        counter++;
+        t = get_branch_at(&((*p)->right),pos,counter);
+    }
+    return t;
+
+
+    /*
     Node ** t = NULL;
     counter++;
     if(p->left != NULL){
@@ -138,6 +157,7 @@ Node ** get_branch_at(Node *p,const unsigned int pos,unsigned int & counter){
         }
     }
     return t;
+    */
 }
 float get_result(Node* p,float x){
     float t1,t2,res;
@@ -278,18 +298,23 @@ void Expression::generate_random(unsigned int n){
     Expression::tree = temp;
 }
 void Expression::mutate(int chance){
-    if(rand() % 1000 <= chance){
+    int times = rand() % chance + 1;
+    for(int i =0 ;i<1;i++){ // change here 1 to times !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //mutate leaves
         Node **p = NULL;
         int t = rand() % 3;
         if(t==0){ //modify
             unsigned int c = 0;
+            p = get_branch_at(&(Expression::tree),rand() % count(Expression::tree),c);
+            std::printf()
+            /*
             t = rand() % count(Expression::tree);
             if(t == 0){
                 p = &(Expression::tree);
             }else{
-                p = get_branch_at(Expression::tree,rand() % count(Expression::tree),c);
+                p = get_branch_at(&(&Expression::tree),rand() % count(Expression::tree),c);
             }
+            */
             if(p == NULL){
                 printf("Unknown error. Quitting.\n");
                 exit(EXIT_FAILURE);
@@ -331,7 +356,6 @@ void Expression::mutate(int chance){
                 }
             }
         }
-        
     }
 
 }
@@ -347,6 +371,6 @@ void Expression::print_tree(){
 unsigned int Expression::get_length(){
     return count(Expression::tree);
 }
-Expression Expression::get_copy(){
-    return Expression(Expression::tree,Expression::avops,Expression::avops_symb,Expression::ran_max,Expression::ran_min);
+Expression* Expression::get_copy(){
+    return new Expression(Expression::tree,Expression::avops,Expression::avops_symb,Expression::ran_max,Expression::ran_min);
 }

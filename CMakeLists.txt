@@ -29,4 +29,5 @@ add_compile_options(
 # add the executable
 add_subdirectory(src)
 add_executable(APPROXY main.cpp)
-target_link_libraries(APPROXY SOMELIB)
+target_link_libraries(APPROXY GA_LIB)
+target_link_libraries(APPROXY EXPR_LIB)
