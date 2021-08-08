@@ -6,8 +6,9 @@
 class GA{
     private:
         std::vector<std::pair<Expression *,float>> expressions;
-        unsigned int num;
-        unsigned int original_lentgh;
+        int num;
+	int chosen;
+        int original_length;
         int chance;
         std::vector<void(*)(const float & ,const float & ,float & )> avops;
         std::vector<std::string> avops_symb;
@@ -17,8 +18,9 @@ class GA{
         float k_a,k_b;
     public:
         GA(
-            unsigned int num,
-            unsigned int original_lentgh,
+            int num,
+	    int chosen,
+            int original_length,
             int chance,
             std::vector<void(*)(const float & ,const float & ,float & )> avops,
             std::vector<std::string> avops_symb,
@@ -30,8 +32,10 @@ class GA{
         );
         ~GA();
         void iterate();
+	void sort();
         std::string get_solution();
         std::vector<std::pair<Expression*, float> > get_results();
+	void print_results();
 };
 
 #endif // !GA_H

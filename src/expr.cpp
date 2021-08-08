@@ -105,8 +105,8 @@ std::string infix(Node * p){
     res+=')';
     return res;
 }
-unsigned int count(Node* p){
-    unsigned int res = 1;
+int count(Node* p){
+    int res = 1;
     if (p->left != NULL)
     {
         res += count(p->left);
@@ -117,7 +117,7 @@ unsigned int count(Node* p){
     }
     return res;
 }
-Node ** get_branch_at(Node **p, const unsigned int pos,unsigned int & counter){
+Node ** get_branch_at(Node **p, const int pos,int & counter){
     if(pos == counter){
         return p;
     }
@@ -134,30 +134,6 @@ Node ** get_branch_at(Node **p, const unsigned int pos,unsigned int & counter){
         t = get_branch_at(&((*p)->right),pos,counter);
     }
     return t;
-
-
-    /*
-    Node ** t = NULL;
-    counter++;
-    if(p->left != NULL){
-        if(pos == counter){
-            return &p->left;
-        }else{
-            t = get_branch_at(p->left,pos,counter);
-        }
-    }
-    if(t!=NULL){
-        return t;
-    }
-    if(p->right != NULL){
-        if(pos == counter){
-            return &p->right;
-        }else{
-            t = get_branch_at(p->right,pos,counter);
-        }
-    }
-    return t;
-    */
 }
 float get_result(Node* p,float x){
     float t1,t2,res;
@@ -265,7 +241,7 @@ void Expression::fill_tree(Node * node){
     }
 }
 Node * Expression::create_node(){
-    unsigned int r = rand() % Expression::avops.size();
+    int r = rand() % Expression::avops.size();
     Node * temp = new Node;
     temp->leftVar = false;
     temp->rightVar = false;
@@ -278,14 +254,14 @@ Node * Expression::create_node(){
     return temp;
 }
 
-void Expression::generate_random(unsigned int n){
+void Expression::generate_random(int n){
     if (n<1){
         printf("Invalid argument. Force quiting.");
         exit(EXIT_FAILURE);
     }
     delete_tree(Expression::tree);
     // generate nodes
-    unsigned int r = rand() % avops.size();
+    int r = rand() % avops.size();
     Node * temp = Expression::create_node();
     for(int i = 1;i<n;i++){
         std::vector<Node **> leaves = get_leaves(temp);
@@ -297,25 +273,15 @@ void Expression::generate_random(unsigned int n){
     Expression::fill_tree(temp);
     Expression::tree = temp;
 }
-void Expression::mutate(int chance){
-    int times = rand() % chance + 1;
-    for(int i =0 ;i<1;i++){ // change here 1 to times !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void Expression::mutate(int chance){ // chance <- percentage, mutate 1 time
+    if (rand() % 100 < chance){
         //mutate leaves
         Node **p = NULL;
-        int t = rand() % 3;
-        if(t==0){ //modify
-            unsigned int c = 0;
+       	int choice = rand() % 3;
+	if(choice==0){ //modify
+            int c = 0;
             p = get_branch_at(&(Expression::tree),rand() % count(Expression::tree),c);
-            std::printf()
-            /*
-            t = rand() % count(Expression::tree);
-            if(t == 0){
-                p = &(Expression::tree);
-            }else{
-                p = get_branch_at(&(&Expression::tree),rand() % count(Expression::tree),c);
-            }
-            */
-            if(p == NULL){
+	    if(p == NULL){
                 printf("Unknown error. Quitting.\n");
                 exit(EXIT_FAILURE);
             }
@@ -325,17 +291,21 @@ void Expression::mutate(int chance){
             temp->right = (*p)->right;
             delete (*p);
             (*p) = temp;
-        }if(t==1){ // append new
+        }if(choice==1){ // append new
             std::vector<Node **> leaves = get_leaves(Expression::tree);
             p = leaves.at(rand()%leaves.size());
             Node * temp = create_node();
             fill_tree(temp);
             *p = temp;
-        }if(t==2){ // delete
+        }if(choice==2){ // delete
             std::vector<Node **> leaves = get_othr_leaves(Expression::tree);
-            p = leaves.at(rand()%leaves.size());
-            Node ** parent = get_parent_of((*p),Expression::tree);
-            if((*parent)->left == (*p)){
+	    if (leaves.size() <= 1){return;}
+	    p = leaves.at(rand()%leaves.size());
+	    Node ** parent = get_parent_of((*p),Expression::tree);
+	    if (parent == NULL){
+		parent = &(Expression::tree);
+	    }
+	    if((*parent)->left == (*p)){
                 delete (*parent)->left;
                 (*parent)->left = NULL;
                 if(rand() % 2 == 1){
