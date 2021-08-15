@@ -1,3 +1,6 @@
+
+// Example usage
+
 #include "src/expr.h"
 #include "src/ga.h"
 #include <vector>
@@ -67,6 +70,7 @@ int main()
         std::pair<float, float>(3.8775510204081627, 48.30577025055688),
         std::pair<float, float>(4.2857142857142865, 72.65442420716553)
     }; // train data: (value, expected result)
+
     GA ga(1000, 100, 5, 10, 40, avops, avops_symb, 10, 1, 200.0, 0.5, train_data);
     std::cout << ga.get_solution() << std::endl;
     while (1)
